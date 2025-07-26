@@ -33,11 +33,18 @@ function resolvePathFromEnv(envVar?: string): { isSwitch: boolean, value: string
   // If it's not a switch, treat it as a potential file path.
   let customPath = envVar;
   // Expand the tilde (~) character to the user's home directory.
-  if (customPath.startsWith('~/')) {
-    customPath = path.join(os.homedir(), customPath.slice(2));
-  } else if (customPath === '~') {
-    customPath = os.homedir();
+if (customPath.startsWith('~/') || customPath === '~') {
+  try {
+    const home = os.homedir();
+    if (customPath === '~') {
+      customPath = home;
+    } else {
+      customPath = path.join(home, customPath.slice(2));
+    }
+  } catch (e) {
+    throw new Error(`Could not resolve home directory for path: ${envVar}`, { cause: e });
   }
+}
 
   // Return it as a non-switch with the fully resolved absolute path.
   return { isSwitch: false, value: path.resolve(customPath) };
